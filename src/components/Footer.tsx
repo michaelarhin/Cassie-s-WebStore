@@ -55,17 +55,28 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="mailto:hello@corporateaura.com" className="opacity-80 transition-opacity hover:opacity-100">
-                  hello@corporateaura.com
+                <a href="mailto:thecorperateaura@gmail.com" className="opacity-80 transition-opacity hover:opacity-100">
+                  thecorperateaura@gmail.com
                 </a>
               </li>
               <li className="opacity-80">Mon – Fri, 9am – 6pm</li>
             </ul>
           </div>
         </div>
-        <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-primary-foreground/15 pt-8 text-xs text-primary-foreground/50 md:flex-row md:items-center">
-          <p>© {new Date().getFullYear()} The Corporate Aura. All rights reserved.</p>
-          <p className="uppercase tracking-[0.2em]">Quiet Power. Radiant Presence.</p>
+        <div className="mt-16 flex flex-col items-start justify-between gap-6 border-t border-primary-foreground/15 pt-8 md:flex-row md:items-center">
+          <p className="text-xs text-primary-foreground/50">© {new Date().getFullYear()} The Corporate Aura. All rights reserved.</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-primary-foreground/50">Quiet Power. Radiant Presence.</p>
+          {/* Mercantiva credit */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-primary-foreground/40">Developed by</span>
+            {/* Logo placeholder — replace src once mercantiva-logo.png is added to src/assets/ */}
+            <img
+              src="/mercantiva-logo.png"
+              alt="Mercantiva Ghana Limited"
+              className="h-8 w-auto brightness-0 invert opacity-70"
+              loading="lazy"
+            />
+          </div>
         </div>
       </div>
     </footer>
