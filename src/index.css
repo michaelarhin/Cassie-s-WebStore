@@ -147,6 +147,21 @@
 
   html {
     scroll-behavior: smooth;
+    transition:
+      background-color 0.4s ease,
+      color 0.4s ease;
+  }
+
+  /* Smooth token transitions on every element */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+  }
+
+  /* But never slow down transforms/layout — keep animations snappy */
+  [data-parallax], [data-parallax] * {
+    transition-property: none;
   }
 
   body {

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, Sun, Moon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
+import { useTheme } from "@/context/ThemeContext";
 import logoAsset from "@/assets/logo.jpeg";
 
 const NAV_LINKS = [
@@ -14,6 +15,7 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const { count, openCart } = useCart();
+  const { resolved, mode, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -68,26 +70,67 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <button
-          onClick={openCart}
-          className="relative p-2 -mr-2 text-foreground transition-transform hover:scale-105"
-          aria-label="Open shopping bag"
-        >
-          <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-          <AnimatePresence>
-            {count > 0 && (
-              <motion.span
-                key={count}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"
-              >
-                {count}
-              </motion.span>
+        <div className="flex items-center gap-1">
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            aria-label={resolved === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={mode === "auto" ? "Auto (time-based) — click to override" : `Manual ${resolved} — click to restore auto`}
+            className="relative p-2 text-foreground/60 hover:text-foreground transition-colors"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {resolved === "dark" ? (
+                <motion.span
+                  key="moon"
+                  initial={{ opacity: 0, rotate: -30, scale: 0.7 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: 30, scale: 0.7 }}
+                  transition={{ duration: 0.25 }}
+                  className="block"
+                >
+                  <Moon className="h-4 w-4" strokeWidth={1.5} />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="sun"
+                  initial={{ opacity: 0, rotate: 30, scale: 0.7 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: -30, scale: 0.7 }}
+                  transition={{ duration: 0.25 }}
+                  className="block"
+                >
+                  <Sun className="h-4 w-4" strokeWidth={1.5} />
+                </motion.span>
+              )}
+            </AnimatePresence>
+            {/* Dot indicator when auto mode is active */}
+            {mode === "auto" && (
+              <span className="absolute bottom-1 right-1 h-1 w-1 rounded-full bg-foreground/40" aria-hidden="true" />
             )}
-          </AnimatePresence>
-        </button>
+          </button>
+
+          {/* Cart */}
+          <button
+            onClick={openCart}
+            className="relative p-2 -mr-2 text-foreground transition-transform hover:scale-105"
+            aria-label="Open shopping bag"
+          >
+            <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+            <AnimatePresence>
+              {count > 0 && (
+                <motion.span
+                  key={count}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"
+                >
+                  {count}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
