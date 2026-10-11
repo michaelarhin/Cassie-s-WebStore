@@ -73,6 +73,7 @@ export default function CheckoutPage() {
         product_id: i.product.id,
         product_name: i.product.name,
         slug: i.product.slug,
+        color: i.color,
         size: i.size,
         qty: i.qty,
         unit_price: i.product.price,
@@ -280,7 +281,7 @@ export default function CheckoutPage() {
           </h2>
           <ul className="mt-6 divide-y divide-border">
             {items.map((i) => (
-              <li key={`${i.product.id}-${i.size}`} className="flex gap-4 py-4">
+              <li key={`${i.product.id}-${i.color}-${i.size}`} className="flex gap-4 py-4">
                 <img
                   src={i.product.image}
                   alt={i.product.name}
@@ -292,7 +293,7 @@ export default function CheckoutPage() {
                     {i.product.name}
                   </p>
                   <p className="mt-1 text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                    {i.size} × {i.qty}
+                    {i.color} · {i.size} × {i.qty}
                   </p>
                 </div>
                 <span className="text-sm">{formatPrice(i.product.price * i.qty)}</span>

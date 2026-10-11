@@ -11,9 +11,14 @@ export default function ProductDetail() {
   const { slug } = useParams();
   const product = slug ? findProduct(slug) : undefined;
   const { addItem } = useCart();
-  const [size, setSize] = useState<string | null>(null);
-  const [qty, setQty] = useState(1);
-  const [error, setError] = useState(false);
+
+  const hasVariants = !!product?.variants?.length;
+  const firstVariant = product?.variants?.[0];
+
+  const [color, setColor] = useState<string>(firstVariant?.name ?? product?.color ?? "");
+  const [size,  setSize]  = useState<string | null>(null);
+  const [qty,   setQty]   = useState(1);
+  const [error, setError] = useState<{ color?: boolean; size?: boolean }>({});
 
   if (!product) return <NotFound />;
 
@@ -24,13 +29,25 @@ export default function ProductDetail() {
     )
     .slice(0, 4);
 
+  // Active variant object
+  const activeVariant = product.variants?.find((v) => v.name === color);
+
+  // Stock for a given size under the active colour
+  const stockFor = (s: string) => activeVariant?.stock[s] ?? Infinity;
+
+  // Display image — use variant image if provided, else product image
+  const displayImage = activeVariant?.image ?? product.image;
+
   const handleAdd = () => {
-    if (!size) {
-      setError(true);
+    const needsColor = hasVariants && !color;
+    const needsSize  = !size;
+    if (needsColor || needsSize) {
+      setError({ color: needsColor, size: needsSize });
       return;
     }
-    setError(false);
-    addItem(product, size, qty);
+    if (activeVariant && size && stockFor(size) === 0) return;
+    setError({});
+    addItem(product, color, size!, qty);
   };
 
   return (
@@ -43,14 +60,16 @@ export default function ProductDetail() {
       </Link>
 
       <div className="mt-8 grid gap-12 lg:grid-cols-2 lg:gap-20">
+        {/* Image */}
         <motion.div
+          key={displayImage}
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
           className="overflow-hidden bg-muted"
         >
           <img
-            src={product.image}
+            src={displayImage}
             alt={product.name}
             className="aspect-[4/5] w-full object-cover"
             width={1024}
@@ -58,6 +77,7 @@ export default function ProductDetail() {
           />
         </motion.div>
 
+        {/* Details */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -70,45 +90,103 @@ export default function ProductDetail() {
             {product.name}
           </h1>
           <p className="mt-4 text-xl tracking-wide">{formatPrice(product.price)}</p>
-          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            Colour · {product.color}
-          </p>
 
           <p className="mt-8 max-w-lg leading-relaxed text-foreground/75">
             {product.description}
           </p>
 
-          <div className="mt-10">
+          {/* ── Colour selection ── */}
+          {hasVariants && (
+            <div className="mt-10">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-luxe text-foreground/60">
+                  Colour — <span className="text-foreground">{color}</span>
+                </span>
+                {error.color && (
+                  <span className="text-xs text-destructive">Please choose a colour</span>
+                )}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {product.variants!.map((v) => {
+                  const totalStock = Object.values(v.stock).reduce((a, b) => a + b, 0);
+                  const soldOut = totalStock === 0;
+                  return (
+                    <button
+                      key={v.name}
+                      onClick={() => { setColor(v.name); setSize(null); setError({}); }}
+                      disabled={soldOut}
+                      title={soldOut ? `${v.name} — sold out` : v.name}
+                      className={`group relative flex items-center gap-2.5 border px-4 py-2.5 text-sm transition-colors
+                        ${color === v.name
+                          ? "border-foreground bg-foreground text-background"
+                          : soldOut
+                            ? "cursor-not-allowed border-border opacity-40"
+                            : "border-border hover:border-foreground/60"
+                        }`}
+                    >
+                      {v.hex && (
+                        <span
+                          className="h-3.5 w-3.5 rounded-full border border-foreground/20 shrink-0"
+                          style={{ background: v.hex }}
+                        />
+                      )}
+                      {v.name}
+                      {soldOut && (
+                        <span className="ml-1 text-[10px] opacity-70">· Sold out</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Size selection ── */}
+          <div className="mt-8">
             <div className="flex items-center justify-between">
               <span className="text-[11px] uppercase tracking-luxe text-foreground/60">
                 Select size
               </span>
-              {error && (
-                <span className="text-xs text-destructive">
-                  Please choose a size
-                </span>
+              {error.size && (
+                <span className="text-xs text-destructive">Please choose a size</span>
               )}
             </div>
             <div className="mt-4 flex flex-wrap gap-3">
-              {product.sizes.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    setSize(s);
-                    setError(false);
-                  }}
-                  className={`min-w-[3.5rem] border px-4 py-3 text-sm transition-colors ${
-                    size === s
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border hover:border-foreground/50"
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
+              {product.sizes.map((s) => {
+                const stock = stockFor(s);
+                const outOfStock = stock === 0;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => { if (!outOfStock) { setSize(s); setError((e) => ({ ...e, size: false })); } }}
+                    disabled={outOfStock}
+                    title={outOfStock ? "Out of stock" : `${stock < 4 ? `Only ${stock} left` : ""}`}
+                    className={`relative min-w-[3.5rem] border px-4 py-3 text-sm transition-colors
+                      ${size === s
+                        ? "border-foreground bg-foreground text-background"
+                        : outOfStock
+                          ? "cursor-not-allowed border-border opacity-35"
+                          : "border-border hover:border-foreground/50"
+                      }`}
+                  >
+                    {s}
+                    {/* Low-stock dot */}
+                    {!outOfStock && stock > 0 && stock <= 3 && (
+                      <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500" title={`Only ${stock} left`} />
+                    )}
+                  </button>
+                );
+              })}
             </div>
+            {/* Low stock notice */}
+            {size && activeVariant && stockFor(size) > 0 && stockFor(size) <= 3 && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                Only {stockFor(size)} left in {color} / {size}
+              </p>
+            )}
           </div>
 
+          {/* ── Qty + Add ── */}
           <div className="mt-8 flex items-stretch gap-4">
             <div className="flex items-center border border-border">
               <button
@@ -135,10 +213,9 @@ export default function ProductDetail() {
             </button>
           </div>
 
+          {/* ── Details ── */}
           <div className="mt-10 border-t border-border pt-8">
-            <h2 className="text-[11px] uppercase tracking-luxe text-foreground/60">
-              Details
-            </h2>
+            <h2 className="text-[11px] uppercase tracking-luxe text-foreground/60">Details</h2>
             <ul className="mt-4 space-y-2.5 text-sm text-foreground/70">
               {product.details.map((d) => (
                 <li key={d} className="flex gap-3">
@@ -151,6 +228,7 @@ export default function ProductDetail() {
         </motion.div>
       </div>
 
+      {/* Related */}
       <section className="mt-28">
         <h2 className="font-display text-3xl font-medium md:text-4xl">
           Completes the <span className="italic">look</span>

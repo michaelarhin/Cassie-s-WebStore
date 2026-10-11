@@ -15,6 +15,14 @@ import giftJournal from "@/assets/gift-journal.jpg";
 
 export { editorial };
 
+/** A single colour option with per-size stock counts */
+export interface ColorVariant {
+  name: string;          // e.g. "Ivory Cream"
+  hex?: string;          // optional CSS colour for the swatch dot
+  image?: string;        // optional per-colour product image URL
+  stock: Record<string, number>; // { "XS": 4, "S": 0, ... }
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -22,10 +30,11 @@ export interface Product {
   category: string;
   price: number;
   image: string;
-  color: string;
+  color: string;          // kept for backward-compat display (= first variant name)
   description: string;
   details: string[];
   sizes: string[];
+  variants?: ColorVariant[];  // if present, drives colour/stock selection UI
   featured?: boolean;
   store?: "aura" | "confetti";
 }
@@ -58,6 +67,11 @@ export const products: Product[] = [
       "Dry clean only",
     ],
     sizes: ["XS", "S", "M", "L", "XL"],
+    variants: [
+      { name: "Ivory Cream", hex: "#f5f0e8", stock: { XS: 3, S: 5, M: 4, L: 2, XL: 1 } },
+      { name: "Espresso",    hex: "#3b2314", stock: { XS: 2, S: 3, M: 3, L: 1, XL: 0 } },
+      { name: "Graphite",    hex: "#4a4a4a", stock: { XS: 1, S: 2, M: 4, L: 3, XL: 2 } },
+    ],
     featured: true,
   },
   {
@@ -77,6 +91,11 @@ export const products: Product[] = [
       "Machine wash cold",
     ],
     sizes: ["XS", "S", "M", "L", "XL"],
+    variants: [
+      { name: "Onyx",     hex: "#1a1a1a", stock: { XS: 4, S: 6, M: 5, L: 3, XL: 2 } },
+      { name: "Camel",    hex: "#c9a96e", stock: { XS: 2, S: 2, M: 3, L: 2, XL: 1 } },
+      { name: "Burgundy", hex: "#6d1f2f", stock: { XS: 1, S: 3, M: 2, L: 0, XL: 0 } },
+    ],
     featured: true,
   },
   {
@@ -96,6 +115,10 @@ export const products: Product[] = [
       "Dry clean only",
     ],
     sizes: ["0", "2", "4", "6", "8", "10", "12"],
+    variants: [
+      { name: "Graphite", hex: "#4a4a4a", stock: { "0": 2, "2": 3, "4": 4, "6": 4, "8": 3, "10": 2, "12": 1 } },
+      { name: "Navy",     hex: "#1b2a4a", stock: { "0": 1, "2": 2, "4": 3, "6": 3, "8": 2, "10": 1, "12": 0 } },
+    ],
     featured: true,
   },
   {
@@ -115,6 +138,11 @@ export const products: Product[] = [
       "Dry clean recommended",
     ],
     sizes: ["XS", "S", "M", "L", "XL"],
+    variants: [
+      { name: "Champagne", hex: "#f7e7ce", stock: { XS: 5, S: 6, M: 5, L: 4, XL: 2 } },
+      { name: "Blush",     hex: "#e8b4b8", stock: { XS: 3, S: 4, M: 3, L: 2, XL: 1 } },
+      { name: "Black",     hex: "#111111", stock: { XS: 2, S: 3, M: 3, L: 2, XL: 1 } },
+    ],
     featured: true,
   },
   {
@@ -134,6 +162,10 @@ export const products: Product[] = [
       "Dry clean only",
     ],
     sizes: ["XS", "S", "M", "L"],
+    variants: [
+      { name: "Camel",   hex: "#c9a96e", stock: { XS: 2, S: 3, M: 3, L: 2 } },
+      { name: "Espresso", hex: "#3b2314", stock: { XS: 1, S: 2, M: 2, L: 1 } },
+    ],
     featured: true,
   },
   {
@@ -153,6 +185,10 @@ export const products: Product[] = [
       "Machine wash cold",
     ],
     sizes: ["0", "2", "4", "6", "8", "10", "12"],
+    variants: [
+      { name: "Graphite", hex: "#4a4a4a", stock: { "0": 3, "2": 4, "4": 5, "6": 5, "8": 4, "10": 3, "12": 2 } },
+      { name: "Black",    hex: "#111111", stock: { "0": 2, "2": 3, "4": 4, "6": 4, "8": 3, "10": 2, "12": 1 } },
+    ],
   },
   {
     id: "7",
@@ -171,6 +207,11 @@ export const products: Product[] = [
       "Hand wash cold",
     ],
     sizes: ["XS", "S", "M", "L", "XL"],
+    variants: [
+      { name: "Ivory",   hex: "#f5f0e8", stock: { XS: 6, S: 7, M: 6, L: 5, XL: 3 } },
+      { name: "Camel",   hex: "#c9a96e", stock: { XS: 3, S: 4, M: 4, L: 3, XL: 2 } },
+      { name: "Graphite", hex: "#4a4a4a", stock: { XS: 2, S: 3, M: 3, L: 2, XL: 1 } },
+    ],
   },
   {
     id: "8",
@@ -189,6 +230,11 @@ export const products: Product[] = [
       "Machine wash cold, lay flat",
     ],
     sizes: ["XS", "S", "M", "L", "XL"],
+    variants: [
+      { name: "Stone",    hex: "#c5bfb5", stock: { XS: 4, S: 5, M: 5, L: 4, XL: 2 } },
+      { name: "Onyx",     hex: "#1a1a1a", stock: { XS: 3, S: 4, M: 4, L: 3, XL: 1 } },
+      { name: "Burgundy", hex: "#6d1f2f", stock: { XS: 1, S: 2, M: 2, L: 1, XL: 0 } },
+    ],
   },
   {
     id: "9",
@@ -207,6 +253,11 @@ export const products: Product[] = [
       "Gold-tone hardware",
     ],
     sizes: ["One Size"],
+    variants: [
+      { name: "Espresso", hex: "#3b2314", stock: { "One Size": 5 } },
+      { name: "Camel",    hex: "#c9a96e", stock: { "One Size": 4 } },
+      { name: "Black",    hex: "#111111", stock: { "One Size": 3 } },
+    ],
   },
 ];
 

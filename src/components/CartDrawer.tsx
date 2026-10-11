@@ -81,7 +81,7 @@ export default function CartDrawer() {
                   <ul className="divide-y divide-border">
                     {items.map((item) => (
                       <li
-                        key={`${item.product.id}-${item.size}`}
+                        key={`${item.product.id}-${item.color}-${item.size}`}
                         className="flex gap-5 py-6"
                       >
                         <Link
@@ -107,7 +107,7 @@ export default function CartDrawer() {
                             </Link>
                             <button
                               onClick={() =>
-                                removeItem(item.product.id, item.size)
+                                removeItem(item.product.id, item.color, item.size)
                               }
                               className="text-muted-foreground hover:text-foreground"
                               aria-label={`Remove ${item.product.name}`}
@@ -116,17 +116,13 @@ export default function CartDrawer() {
                             </button>
                           </div>
                           <p className="mt-1 text-xs uppercase tracking-[0.15em] text-muted-foreground">
-                            {item.product.color} · Size {item.size}
+                            {item.color} · Size {item.size}
                           </p>
                           <div className="mt-auto flex items-center justify-between pt-3">
                             <div className="flex items-center border border-border">
                               <button
                                 onClick={() =>
-                                  updateQty(
-                                    item.product.id,
-                                    item.size,
-                                    item.qty - 1
-                                  )
+                                  updateQty(item.product.id, item.color, item.size, item.qty - 1)
                                 }
                                 className="p-2 text-foreground/60 hover:text-foreground"
                                 aria-label="Decrease quantity"
@@ -138,11 +134,7 @@ export default function CartDrawer() {
                               </span>
                               <button
                                 onClick={() =>
-                                  updateQty(
-                                    item.product.id,
-                                    item.size,
-                                    item.qty + 1
-                                  )
+                                  updateQty(item.product.id, item.color, item.size, item.qty + 1)
                                 }
                                 className="p-2 text-foreground/60 hover:text-foreground"
                                 aria-label="Increase quantity"
