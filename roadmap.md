@@ -1,0 +1,2 @@
+- [x] Add a photographic Coming Soon front page with discreet access to the existing storefront.
+- [x] Apply automatic daytime and nighttime themes and verify both states.

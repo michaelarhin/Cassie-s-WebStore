@@ -1,0 +1,193 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Typography */
+  --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+
+  /* Border radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Semantic color tokens (reference CSS custom properties defined below) */
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  /* Animations (accordion) */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Container */
+  --container-center: true;
+  --container-padding: 2rem;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+}
+
+@layer base {
+  :root {
+    /* The Corporate Aura — palette drawn from the brand mark:
+       espresso brown ground, warm cream lettering, ivory field */
+    --background: 43 41% 95%;
+    --foreground: 23 31% 15%;
+
+    --card: 45 50% 98%;
+    --card-foreground: 23 31% 15%;
+
+    --popover: 45 50% 98%;
+    --popover-foreground: 23 31% 15%;
+
+    --primary: 23 31% 15%;
+    --primary-foreground: 45 70% 90%;
+
+    --secondary: 40 35% 90%;
+    --secondary-foreground: 23 31% 15%;
+
+    --muted: 40 30% 91%;
+    --muted-foreground: 28 14% 46%;
+
+    --accent: 45 55% 86%;
+    --accent-foreground: 23 31% 15%;
+
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 45 70% 90%;
+
+    --border: 40 30% 84%;
+    --input: 40 30% 84%;
+    --ring: 23 31% 15%;
+
+    --radius: 0.125rem;
+
+    --sidebar-background: 23 31% 15%;
+    --sidebar-foreground: 45 70% 90%;
+    --sidebar-primary: 45 70% 90%;
+    --sidebar-primary-foreground: 23 31% 15%;
+    --sidebar-accent: 23 31% 22%;
+    --sidebar-accent-foreground: 45 70% 90%;
+    --sidebar-border: 23 20% 25%;
+    --sidebar-ring: 45 70% 90%;
+    --welcome-overlay: 43 41% 95%;
+    --welcome-overlay-opacity: 0.28;
+    --welcome-image-brightness: 1;
+  }
+
+  .dark {
+    --background: 23 20% 9%;
+    --foreground: 43 35% 91%;
+    --card: 23 18% 13%;
+    --card-foreground: 43 35% 91%;
+    --popover: 23 18% 13%;
+    --popover-foreground: 43 35% 91%;
+    --primary: 45 55% 86%;
+    --primary-foreground: 23 31% 15%;
+    --secondary: 23 16% 18%;
+    --secondary-foreground: 43 35% 91%;
+    --muted: 23 12% 17%;
+    --muted-foreground: 40 15% 66%;
+    --accent: 23 18% 23%;
+    --accent-foreground: 45 55% 86%;
+    --destructive: 0 60% 55%;
+    --destructive-foreground: 45 70% 90%;
+    --border: 23 12% 27%;
+    --input: 23 12% 27%;
+    --ring: 45 55% 86%;
+    --welcome-overlay: 23 20% 9%;
+    --welcome-overlay-opacity: 0.52;
+    --welcome-image-brightness: 0.7;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "liga" 1;
+  }
+
+  .welcome-shade {
+    background: hsl(var(--welcome-overlay) / var(--welcome-overlay-opacity));
+  }
+
+  .welcome-image {
+    filter: brightness(var(--welcome-image-brightness));
+  }
+
+  @media (max-width: 639px) {
+    .welcome-shade {
+      background: hsl(var(--welcome-overlay) / 0.66);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  ::selection {
+    background: hsl(var(--accent));
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: "Cormorant Garamond", Georgia, serif;
+  }
+
+  .tracking-luxe {
+    letter-spacing: 0.28em;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
