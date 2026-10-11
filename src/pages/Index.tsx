@@ -87,7 +87,7 @@ export default function Index() {
       {/* Marquee strip */}
       <section className="border-y border-border bg-secondary/60 py-5">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-12 gap-y-3 px-6 text-[11px] uppercase tracking-[0.22em] text-foreground/50">
-          <span>Complimentary shipping over $250</span>
+          <span>Complimentary shipping over GH₵250</span>
           <span className="hidden md:inline">·</span>
           <span>Ethically tailored</span>
           <span className="hidden md:inline">·</span>

@@ -211,9 +211,9 @@ export const products: Product[] = [
 ];
 
 export const formatPrice = (n: number) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("en-GH", {
     style: "currency",
-    currency: "USD",
+    currency: "GHS",
     minimumFractionDigits: 0,
   }).format(n);
 
