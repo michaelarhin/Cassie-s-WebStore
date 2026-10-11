@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Check, ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/data/products";
 import { supabase, type Order } from "@/lib/supabase";
@@ -22,18 +21,18 @@ const EMPTY: FormState = {
   address: "", address2: "", city: "", region: "",
 };
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+
 export default function CheckoutPage() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal } = useCart();
   const navigate = useNavigate();
-  const [placed, setPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY);
-  const [savedOrder, setSavedOrder] = useState<Order | null>(null);
+  const [error, setError]     = useState<string | null>(null);
+  const [form, setForm]       = useState<FormState>(EMPTY);
 
   const shipping = subtotal >= 250 || subtotal === 0 ? 0 : 15;
-  const tax = Math.round(subtotal * 0.08 * 100) / 100;
-  const total = subtotal + shipping + tax;
+  const tax      = Math.round(subtotal * 0.08 * 100) / 100;
+  const total    = subtotal + shipping + tax;
 
   const set = (k: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -50,91 +49,75 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
-
     setLoading(true);
     setError(null);
 
-    const order: Omit<Order, "id" | "created_at"> = {
-      first_name: form.firstName.trim(),
-      last_name: form.lastName.trim(),
-      email: form.email.trim().toLowerCase(),
-      phone: form.phone.trim() || undefined,
-      address_line1: form.address.trim(),
-      address_line2: form.address2.trim() || undefined,
-      city: form.city.trim(),
-      region: form.region.trim(),
-      country: "Ghana",
-      subtotal,
-      shipping,
-      tax,
-      total,
-      currency: "GHS",
-      items: items.map((i) => ({
-        product_id: i.product.id,
-        product_name: i.product.name,
-        slug: i.product.slug,
-        color: i.color,
-        size: i.size,
-        qty: i.qty,
-        unit_price: i.product.price,
-        line_total: i.product.price * i.qty,
-      })),
-      status: "pending",
-    };
+    try {
+      // 1. Save the order as "pending"
+      const order: Omit<Order, "id" | "created_at"> = {
+        first_name:    form.firstName.trim(),
+        last_name:     form.lastName.trim(),
+        email:         form.email.trim().toLowerCase(),
+        phone:         form.phone.trim() || undefined,
+        address_line1: form.address.trim(),
+        address_line2: form.address2.trim() || undefined,
+        city:          form.city.trim(),
+        region:        form.region.trim(),
+        country:       "Ghana",
+        subtotal, shipping, tax, total,
+        currency: "GHS",
+        items: items.map((i) => ({
+          product_id:   i.product.id,
+          product_name: i.product.name,
+          slug:         i.product.slug,
+          color:        i.color,
+          size:         i.size,
+          qty:          i.qty,
+          unit_price:   i.product.price,
+          line_total:   i.product.price * i.qty,
+        })),
+        status: "pending",
+      };
 
-    const { data, error: sbError } = await supabase
-      .from("orders")
-      .insert(order)
-      .select()
-      .single();
+      const { data: savedOrder, error: sbError } = await supabase
+        .from("orders")
+        .insert(order)
+        .select()
+        .single();
 
-    if (sbError) {
-      setError("We couldn't save your order. Please try again.");
+      if (sbError || !savedOrder) throw new Error(sbError?.message ?? "Failed to save order");
+
+      // 2. Initialize Paystack payment via Edge Function
+      const initRes = await fetch(
+        `${SUPABASE_URL}/functions/v1/initialize-payment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            order_id:     savedOrder.id,
+            email:        order.email,
+            amount_ghs:   total,
+            callback_url: `${window.location.origin}/payment/callback`,
+          }),
+        }
+      );
+
+      const initData = await initRes.json();
+      if (!initRes.ok || !initData.authorization_url) {
+        throw new Error(initData.error ?? "Payment initialization failed");
+      }
+
+      // 3. Redirect to Paystack checkout (clears cart via callback page)
+      window.location.href = initData.authorization_url;
+
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       setLoading(false);
-      return;
     }
-
-    setSavedOrder(data as Order);
-    clearCart();
-    setPlaced(true);
-    window.scrollTo({ top: 0 });
-    setLoading(false);
   };
-
-  // ── Confirmation screen ────────────────────────────────────────────────────
-  if (placed) {
-    return (
-      <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 py-24 text-center">
-        <motion.div
-          initial={{ scale: 0.6, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 16 }}
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground"
-        >
-          <Check className="h-8 w-8" strokeWidth={1.5} />
-        </motion.div>
-        <h1 className="mt-8 font-display text-4xl font-medium">
-          Thank you, {form.firstName || "beautiful"}.
-        </h1>
-        <p className="mt-4 max-w-sm text-sm leading-relaxed text-foreground/70">
-          Your order has been confirmed and saved. A receipt is on its way to{" "}
-          <span className="text-foreground">{form.email}</span>. Your pieces
-          ship within two business days — pressed, wrapped, and ready.
-        </p>
-        {savedOrder?.id && (
-          <p className="mt-3 text-xs text-foreground/40">
-            Order ref: {savedOrder.id.split("-")[0].toUpperCase()}
-          </p>
-        )}
-        <Link
-          to="/shop"
-          className="mt-10 bg-primary px-10 py-4 text-[12px] uppercase tracking-luxe text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          Continue Shopping
-        </Link>
-      </div>
-    );
-  }
 
   // ── Empty bag ──────────────────────────────────────────────────────────────
   if (items.length === 0) {
@@ -248,14 +231,14 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Payment placeholder */}
+          {/* Payment */}
           <div>
             <h2 className="text-[11px] uppercase tracking-luxe text-foreground/60">
               Payment
             </h2>
-            <div className="mt-3 border border-border bg-secondary/50 px-4 py-5 text-sm text-foreground/70">
-              Mobile Money, card, and payment gateway options will appear here
-              once live payments are connected. Your order will be recorded now.
+            <div className="mt-3 flex items-center gap-3 rounded border border-border bg-secondary/30 px-4 py-4 text-sm text-foreground/70">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-[#00C3F7]" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+              You'll be redirected to <strong className="text-foreground">Paystack</strong> to pay securely by card or Mobile Money.
             </div>
           </div>
 
@@ -270,7 +253,7 @@ export default function CheckoutPage() {
             className="w-full bg-primary py-4 text-[12px] uppercase tracking-luxe text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center gap-3"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Placing order…" : `Place Order — ${formatPrice(total)}`}
+            {loading ? "Redirecting to payment…" : `Pay ${formatPrice(total)} via Paystack`}
           </button>
         </form>
 

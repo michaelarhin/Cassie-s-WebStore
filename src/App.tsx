@@ -17,6 +17,7 @@ import NotFound from "@/pages/NotFound";
 import WelcomePage from "@/pages/WelcomePage";
 import StoreSelectPage from "@/pages/StoreSelectPage";
 import ConfettiPage from "@/pages/ConfettiPage";
+import PaymentCallback from "@/pages/PaymentCallback";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 
@@ -41,6 +42,7 @@ const App = () => (
                   <Route path="/shop" element={<ShopPage />} />
                   <Route path="/product/:slug" element={<ProductDetail />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/payment/callback" element={<PaymentCallback />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
