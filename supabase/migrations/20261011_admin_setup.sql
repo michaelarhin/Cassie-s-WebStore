@@ -60,6 +60,19 @@ create policy "Admin can delete products"
   to authenticated using (true);
 
 -- 3. RLS update on orders — admin can read all orders
+drop policy if exists "Anyone can place an order" on public.orders;
+drop policy if exists "Visitors can view their own orders" on public.orders;
+drop policy if exists "Admin can read all orders" on public.orders;
+drop policy if exists "Admin can update order status" on public.orders;
+
+create policy "Anyone can place an order"
+  on public.orders for insert
+  with check (true);
+
+create policy "Visitors can view their own orders"
+  on public.orders for select
+  using (true);
+
 create policy "Admin can read all orders"
   on public.orders for select
   to authenticated
