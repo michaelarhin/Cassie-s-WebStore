@@ -181,12 +181,14 @@ export default function Index() {
         <motion.h2 {...fadeUp} transition={{ duration: 0.6 }} className="text-center font-display text-4xl font-medium md:text-5xl">
           Shop by <span className="italic">mood</span>
         </motion.h2>
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { label: "Tailoring", img: products[0].image, category: "Tailoring" },
-            { label: "Dresses", img: products[1].image, category: "Dresses" },
-            { label: "Blouses & Knits", img: products[3].image, category: "Blouses & Knits" },
-            { label: "Outerwear", img: products[4].image, category: "Outerwear" },
+            { label: "Tailoring",      img: products[0].image, category: "Tailoring"       },
+            { label: "Dresses",        img: products[1].image, category: "Dresses"          },
+            { label: "Blouses & Knits",img: products[3].image, category: "Blouses & Knits"  },
+            { label: "Outerwear",      img: products[4].image, category: "Outerwear"        },
+            { label: "Shoes",          img: products[8].image, category: "Shoes"            },
+            { label: "Bags",           img: products[8].image, category: "Bags"             },
           ].map((c, i) => (
             <motion.div
               key={c.category}

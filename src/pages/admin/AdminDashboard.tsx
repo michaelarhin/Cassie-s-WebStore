@@ -11,8 +11,9 @@ import type { ColorVariant } from "@/data/products";
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const SIZES_CLOTHING = ["XS", "S", "M", "L", "XL", "XXL"];
 const SIZES_NUMERIC  = ["0", "2", "4", "6", "8", "10", "12"];
+const SIZES_SHOES    = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"];
 const SIZES_ONE      = ["One Size"];
-const ALL_SIZES      = [...SIZES_CLOTHING, ...SIZES_NUMERIC, ...SIZES_ONE];
+const ALL_SIZES      = [...SIZES_CLOTHING, ...SIZES_NUMERIC, ...SIZES_SHOES, ...SIZES_ONE];
 
 const STATUS_COLORS: Record<string, string> = {
   pending:   "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",

@@ -46,6 +46,8 @@ export const CATEGORIES = [
   "Blouses & Knits",
   "Skirts",
   "Outerwear",
+  "Shoes",
+  "Bags",
   "Accessories",
 ];
 
