@@ -195,17 +195,32 @@ export default function Index() {
         </motion.h2>
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { label: "Tailoring",       category: "Tailoring"       },
-            { label: "Dresses",         category: "Dresses"         },
-            { label: "Blouses & Knits", category: "Blouses & Knits" },
-            { label: "Outerwear",       category: "Outerwear"       },
-            { label: "Shoes",           category: "Shoes"           },
-            { label: "Bags",            category: "Bags"            },
+            {
+              label: "Tailoring", category: "Tailoring",
+              fallback: "https://images.unsplash.com/photo-1548624313-0396c75e4b1a?w=800&h=1067&fit=crop&crop=faces,center&q=80",
+            },
+            {
+              label: "Dresses", category: "Dresses",
+              fallback: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&h=1067&fit=crop&crop=faces,center&q=80",
+            },
+            {
+              label: "Blouses & Knits", category: "Blouses & Knits",
+              fallback: "https://images.unsplash.com/photo-1583846552345-d2bc66dde253?w=800&h=1067&fit=crop&crop=faces,center&q=80",
+            },
+            {
+              label: "Outerwear", category: "Outerwear",
+              fallback: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=800&h=1067&fit=crop&crop=faces,center&q=80",
+            },
+            {
+              label: "Shoes", category: "Shoes",
+              fallback: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&h=1067&fit=crop&crop=center&q=80",
+            },
+            {
+              label: "Bags", category: "Bags",
+              fallback: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&h=1067&fit=crop&crop=center&q=80",
+            },
           ].map((c, i) => {
-            // Use the first product image from that category, fall back to first product
-            const img = products.find((p) => p.category === c.category)?.image
-              ?? products[0]?.image;
-            if (!img) return null;
+            const img = products.find((p) => p.category === c.category)?.image ?? c.fallback;
             return (
               <motion.div
                 key={c.category}
