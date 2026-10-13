@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { products, editorial } from "@/data/products";
+import { editorial } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import logoAsset from "@/assets/logo.jpeg";
 import heroImg from "@/assets/hero.jpg";
 import ParallaxImage from "@/components/ParallaxImage";
@@ -14,7 +15,8 @@ const fadeUp = {
 };
 
 export default function Index() {
-  const featured = products.filter((p) => p.featured);
+  const { products, loading } = useProducts();
+  const featured = products.filter((p) => p.featured).slice(0, 4);
 
   return (
     <div>
@@ -116,9 +118,19 @@ export default function Index() {
           </Link>
         </motion.div>
         <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-14 lg:grid-cols-4">
-          {featured.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
-          ))}
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[4/5] w-full bg-muted" />
+                <div className="mt-4 h-4 w-3/4 bg-muted rounded" />
+                <div className="mt-2 h-3 w-1/2 bg-muted rounded" />
+              </div>
+            ))
+          ) : (
+            featured.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))
+          )}
         </div>
         <div className="mt-12 text-center md:hidden">
           <Link to="/shop" className="text-[12px] uppercase tracking-luxe underline underline-offset-4">
@@ -183,34 +195,40 @@ export default function Index() {
         </motion.h2>
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { label: "Tailoring",      img: products[0].image, category: "Tailoring"       },
-            { label: "Dresses",        img: products[1].image, category: "Dresses"          },
-            { label: "Blouses & Knits",img: products[3].image, category: "Blouses & Knits"  },
-            { label: "Outerwear",      img: products[4].image, category: "Outerwear"        },
-            { label: "Shoes",          img: products[8].image, category: "Shoes"            },
-            { label: "Bags",           img: products[8].image, category: "Bags"             },
-          ].map((c, i) => (
-            <motion.div
-              key={c.category}
-              {...fadeUp}
-              transition={{ duration: 0.6, delay: i * 0.08 }}
-            >
-              <Link
-                to={`/shop?category=${encodeURIComponent(c.category)}`}
-                className="group relative block overflow-hidden"
+            { label: "Tailoring",       category: "Tailoring"       },
+            { label: "Dresses",         category: "Dresses"         },
+            { label: "Blouses & Knits", category: "Blouses & Knits" },
+            { label: "Outerwear",       category: "Outerwear"       },
+            { label: "Shoes",           category: "Shoes"           },
+            { label: "Bags",            category: "Bags"            },
+          ].map((c, i) => {
+            // Use the first product image from that category, fall back to first product
+            const img = products.find((p) => p.category === c.category)?.image
+              ?? products[0]?.image;
+            if (!img) return null;
+            return (
+              <motion.div
+                key={c.category}
+                {...fadeUp}
+                transition={{ duration: 0.6, delay: i * 0.08 }}
               >
-                <ParallaxImage
-                  src={c.img}
-                  alt={c.label}
-                  className="relative aspect-[3/4] w-full"
-                />
-                <div className="absolute inset-0 bg-foreground/20 transition-colors group-hover:bg-foreground/30" />
-                <span className="absolute inset-x-0 bottom-6 text-center font-display text-2xl text-primary-foreground">
-                  {c.label}
-                </span>
-              </Link>
-            </motion.div>
-          ))}
+                <Link
+                  to={`/shop?category=${encodeURIComponent(c.category)}`}
+                  className="group relative block overflow-hidden"
+                >
+                  <ParallaxImage
+                    src={img}
+                    alt={c.label}
+                    className="relative aspect-[3/4] w-full"
+                  />
+                  <div className="absolute inset-0 bg-foreground/20 transition-colors group-hover:bg-foreground/30" />
+                  <span className="absolute inset-x-0 bottom-6 text-center font-display text-2xl text-primary-foreground">
+                    {c.label}
+                  </span>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
     </div>

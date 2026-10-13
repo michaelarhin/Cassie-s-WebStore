@@ -1,11 +1,13 @@
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
-import { CATEGORIES, products } from "@/data/products";
+import { CATEGORIES } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 export default function ShopPage() {
   const [params, setParams] = useSearchParams();
   const active = params.get("category") ?? "All";
+  const { products, loading } = useProducts();
 
   const visible =
     active === "All"
@@ -50,19 +52,25 @@ export default function ShopPage() {
         ))}
       </div>
 
-      <motion.div
-        key={active}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        className="mt-14 grid grid-cols-2 gap-x-6 gap-y-14 lg:grid-cols-3"
-      >
-        {visible.map((p, i) => (
-          <ProductCard key={p.id} product={p} index={i} />
-        ))}
-      </motion.div>
+      {loading ? (
+        <div className="mt-20 flex justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
+        </div>
+      ) : (
+        <motion.div
+          key={active}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="mt-14 grid grid-cols-2 gap-x-6 gap-y-14 lg:grid-cols-3"
+        >
+          {visible.map((p, i) => (
+            <ProductCard key={p.id} product={p} index={i} />
+          ))}
+        </motion.div>
+      )}
 
-      {visible.length === 0 && (
+      {!loading && visible.length === 0 && (
         <p className="mt-20 text-center text-muted-foreground">
           No pieces in this category yet.
         </p>

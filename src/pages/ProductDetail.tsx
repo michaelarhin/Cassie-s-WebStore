@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronLeft, Minus, Plus } from "lucide-react";
 import NotFound from "@/pages/NotFound";
 import ProductCard from "@/components/ProductCard";
-import { findProduct, formatPrice, storeProducts } from "@/data/products";
+import { findProduct, formatPrice } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/context/CartContext";
 
 export default function ProductDetail() {
   const { slug } = useParams();
-  const product = slug ? findProduct(slug) : undefined;
+  const { allProducts, loading } = useProducts();
   const { addItem } = useCart();
+
+  // Find product from live data first, fall back to static
+  const product = allProducts.find((p) => p.slug === slug) ?? (slug ? findProduct(slug) : undefined);
 
   const hasVariants = !!product?.variants?.length;
   const firstVariant = product?.variants?.[0];
@@ -20,10 +24,28 @@ export default function ProductDetail() {
   const [qty,   setQty]   = useState(1);
   const [error, setError] = useState<{ color?: boolean; size?: boolean }>({});
 
+  // Reset selections when product changes
+  useEffect(() => {
+    if (product) {
+      setColor(product.variants?.[0]?.name ?? product.color ?? "");
+      setSize(null);
+      setQty(1);
+      setError({});
+    }
+  }, [product?.id]);
+
+  if (loading && !product) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
+      </div>
+    );
+  }
+
   if (!product) return <NotFound />;
 
-  const related = storeProducts(product)
-    .filter((p) => p.id !== product.id)
+  const related = allProducts
+    .filter((p) => p.id !== product.id && p.store === product.store)
     .sort((a, b) =>
       a.category === product.category ? -1 : b.category === product.category ? 1 : 0
     )
