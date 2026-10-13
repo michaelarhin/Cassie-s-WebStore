@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, type DbProduct } from "@/lib/supabase";
-import { products as staticProducts, giftProducts as staticGifts, type Product, type ColorVariant } from "@/data/products";
+import { type Product, type ColorVariant } from "@/data/products";
 
 // Convert a Supabase DbProduct row into the Product shape used by the UI
 function dbToProduct(p: DbProduct & { variants?: ColorVariant[] }): Product {
@@ -39,31 +39,22 @@ export function useProducts(): UseProductsResult {
       .eq("active", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        if (data && data.length > 0) {
-          setDbProducts((data as (DbProduct & { variants?: ColorVariant[] })[]).map(dbToProduct));
-        }
+        setDbProducts(
+          data
+            ? (data as (DbProduct & { variants?: ColorVariant[] })[]).map(dbToProduct)
+            : []
+        );
         setLoading(false);
       });
   }, []);
 
-  // Merge: Supabase products take precedence; static ones fill the rest
-  // Deduplicate by slug so a static product replaced by a DB one doesn't appear twice
-  const merge = (dbList: Product[], staticList: Product[]) => {
-    const dbSlugs = new Set(dbList.map((p) => p.slug));
-    const staticFallback = staticList.filter((p) => !dbSlugs.has(p.slug));
-    return [...dbList, ...staticFallback];
-  };
-
-  const dbAura     = dbProducts.filter((p) => p.store !== "confetti");
-  const dbConfetti = dbProducts.filter((p) => p.store === "confetti");
-
-  const products     = merge(dbAura,     staticProducts);
-  const giftProducts = merge(dbConfetti, staticGifts);
+  const products     = dbProducts.filter((p) => p.store !== "confetti");
+  const giftProducts = dbProducts.filter((p) => p.store === "confetti");
 
   return {
     products,
     giftProducts,
-    allProducts: [...products, ...giftProducts],
+    allProducts: dbProducts,
     loading,
   };
 }
