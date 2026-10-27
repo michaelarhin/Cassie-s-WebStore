@@ -76,8 +76,8 @@ export default function AdminDashboard() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError]     = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState(false);
-  const [imageFile, setImageFile]     = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState("");
+  const [imageFiles, setImageFiles]   = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // variant builder
@@ -121,10 +121,18 @@ export default function AdminDashboard() {
 
   // ── image upload ───────────────────────────────────────────────────────────
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImageFiles((prev) => [...prev, ...files]);
+    setImagePreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+    // reset input so same file can be re-added if needed
+    e.target.value = "";
+  };
+
+  const removeImage = (idx: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== idx));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+    if (idx === 0) setForm((f) => ({ ...f, image_url: f.images?.[1] ?? "" }));
   };
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -160,8 +168,8 @@ export default function AdminDashboard() {
   const startEdit = (p: DbProductWithVariants) => {
     setEditTarget(p);
     setForm({ ...p, variants: p.variants ?? [] });
-    setImagePreview(p.image_url);
-    setImageFile(null);
+    setImagePreviews((p as any).images?.length ? (p as any).images : p.image_url ? [p.image_url] : []);
+    setImageFiles([]);
     setFormError(null);
     setFormSuccess(false);
     setTab("add");
@@ -171,8 +179,8 @@ export default function AdminDashboard() {
   const cancelEdit = () => {
     setEditTarget(null);
     setForm(emptyForm());
-    setImagePreview("");
-    setImageFile(null);
+    setImagePreviews([]);
+    setImageFiles([]);
     setFormError(null);
     setVariantDraft(emptyVariant());
   };
@@ -185,8 +193,12 @@ export default function AdminDashboard() {
     setFormSuccess(false);
 
     try {
-      let image_url = form.image_url;
-      if (imageFile) image_url = await uploadImage(imageFile);
+      // Upload any new image files
+      const uploadedUrls = await Promise.all(imageFiles.map(uploadImage));
+      // Combine: existing previews that are already URLs (not blob:) + newly uploaded
+      const existingUrls = imagePreviews.filter((p) => !p.startsWith("blob:"));
+      const allImages = [...existingUrls, ...uploadedUrls];
+      const image_url = allImages[0] ?? form.image_url;
 
       // derive color from first variant name if variants exist
       const color = form.variants.length > 0 ? form.variants[0].name : form.color;
@@ -195,10 +207,11 @@ export default function AdminDashboard() {
         ...form,
         slug: form.slug || slugify(form.name),
         image_url,
+        images: allImages,
         price: Number(form.price),
         color,
         variants: form.variants,
-      } as DbProductInsert & { variants: ColorVariant[] };
+      } as DbProductInsert & { variants: ColorVariant[]; images: string[] };
 
       if (editTarget) {
         const { error } = await supabase.from("products").update(payload).eq("id", editTarget.id);
@@ -597,21 +610,65 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Image upload */}
+              {/* Multi-image upload */}
               <div>
-                <label className="mb-1.5 block text-[11px] uppercase tracking-luxe text-muted-foreground">Product image</label>
-                <div onClick={() => fileRef.current?.click()}
-                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded border-2 border-dashed border-border px-6 py-8 text-center hover:border-foreground transition-colors">
-                  {imagePreview
-                    ? <img src={imagePreview} alt="preview" className="max-h-40 rounded object-cover" />
-                    : <><UploadCloud className="h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">Click to upload</p></>
-                  }
-                </div>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                {imagePreview && (
-                  <button type="button" onClick={() => { setImagePreview(""); setImageFile(null); setForm((f) => ({ ...f, image_url: "" })); }}
-                    className="mt-2 text-xs text-muted-foreground hover:text-destructive transition-colors">Remove image</button>
+                <label className="mb-1.5 block text-[11px] uppercase tracking-luxe text-muted-foreground">
+                  Product images <span className="text-muted-foreground/60 normal-case tracking-normal">(first image is primary — drag to reorder)</span>
+                </label>
+
+                {/* Preview grid */}
+                {imagePreviews.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {imagePreviews.map((src, i) => (
+                      <div key={i} className="relative group">
+                        <img src={src} alt={`Image ${i + 1}`} className="h-24 w-20 rounded object-cover border border-border" />
+                        {i === 0 && (
+                          <span className="absolute top-1 left-1 rounded bg-foreground/70 px-1 py-0.5 text-[9px] uppercase tracking-wide text-background">
+                            Primary
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Add more button */}
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="flex h-24 w-20 flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <span className="text-[10px]">Add</span>
+                    </button>
+                  </div>
                 )}
+
+                {/* Empty state drop zone */}
+                {imagePreviews.length === 0 && (
+                  <div
+                    onClick={() => fileRef.current?.click()}
+                    className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded border-2 border-dashed border-border px-6 py-8 text-center hover:border-foreground transition-colors"
+                  >
+                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Click to upload images</p>
+                    <p className="text-xs text-muted-foreground/60">You can select multiple at once</p>
+                  </div>
+                )}
+
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
               </div>
 
               {/* Toggles */}

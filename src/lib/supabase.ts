@@ -58,6 +58,7 @@ export interface DbProduct {
   details: string[];
   sizes: string[];
   image_url: string;
+  images: string[];       // all product images
   featured: boolean;
   store: "aura" | "confetti";
   active: boolean;

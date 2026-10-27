@@ -4,13 +4,15 @@ import { type Product, type ColorVariant } from "@/data/products";
 
 // Convert a Supabase DbProduct row into the Product shape used by the UI
 function dbToProduct(p: DbProduct & { variants?: ColorVariant[] }): Product {
+  const images = p.images?.length ? p.images : [p.image_url].filter(Boolean);
   return {
     id:          p.id,
     slug:        p.slug,
     name:        p.name,
     category:    p.category,
     price:       p.price,
-    image:       p.image_url,
+    image:       images[0] ?? p.image_url,
+    images,
     color:       p.color,
     description: p.description,
     details:     p.details ?? [],

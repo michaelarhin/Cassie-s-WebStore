@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Minus, Plus } from "lucide-react";
 import NotFound from "@/pages/NotFound";
 import ProductCard from "@/components/ProductCard";
@@ -58,7 +58,21 @@ export default function ProductDetail() {
   const stockFor = (s: string) => activeVariant?.stock[s] ?? Infinity;
 
   // Display image — use variant image if provided, else product image
-  const displayImage = activeVariant?.image ?? product.image;
+  // All images: variant image first if selected, then all product images
+  const allImages = (() => {
+    const base = product.images?.length ? product.images : [product.image];
+    if (activeVariant?.image && !base.includes(activeVariant.image)) {
+      return [activeVariant.image, ...base];
+    }
+    return base;
+  })();
+
+  const [activeImg, setActiveImg] = useState(0);
+
+  // Reset active image when colour changes
+  useEffect(() => { setActiveImg(0); }, [color]);
+
+  const displayImage = allImages[activeImg] ?? product.image;
 
   const handleAdd = () => {
     const needsColor = hasVariants && !color;
@@ -82,22 +96,46 @@ export default function ProductDetail() {
       </Link>
 
       <div className="mt-8 grid gap-12 lg:grid-cols-2 lg:gap-20">
-        {/* Image */}
-        <motion.div
-          key={displayImage}
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-          className="overflow-hidden bg-muted"
-        >
-          <img
-            src={displayImage}
-            alt={product.name}
-            className="aspect-[4/5] w-full object-cover"
-            width={1024}
-            height={1280}
-          />
-        </motion.div>
+        {/* ── Image gallery ── */}
+        <div className="flex gap-3">
+          {/* Thumbnail strip — only show when multiple images */}
+          {allImages.length > 1 && (
+            <div className="flex flex-col gap-2">
+              {allImages.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImg(i)}
+                  className={`relative h-16 w-12 shrink-0 overflow-hidden bg-muted transition-all duration-200 ${
+                    activeImg === i
+                      ? "ring-1 ring-foreground ring-offset-1"
+                      : "opacity-50 hover:opacity-80"
+                  }`}
+                  aria-label={`View image ${i + 1}`}
+                >
+                  <img src={img} alt="" className="h-full w-full object-cover" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Main image */}
+          <div className="flex-1 overflow-hidden bg-muted">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={displayImage}
+                src={displayImage}
+                alt={product.name}
+                initial={{ opacity: 0, scale: 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="aspect-[4/5] w-full object-cover"
+                width={1024}
+                height={1280}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
 
         {/* Details */}
         <motion.div

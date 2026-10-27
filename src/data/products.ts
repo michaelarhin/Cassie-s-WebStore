@@ -29,12 +29,13 @@ export interface Product {
   name: string;
   category: string;
   price: number;
-  image: string;
-  color: string;          // kept for backward-compat display (= first variant name)
+  image: string;          // primary image (first of images[])
+  images?: string[];      // all product images
+  color: string;
   description: string;
   details: string[];
   sizes: string[];
-  variants?: ColorVariant[];  // if present, drives colour/stock selection UI
+  variants?: ColorVariant[];
   featured?: boolean;
   store?: "aura" | "confetti";
 }
