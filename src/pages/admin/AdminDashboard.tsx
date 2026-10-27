@@ -195,7 +195,7 @@ export default function AdminDashboard() {
     try {
       // Upload any new image files
       const uploadedUrls = await Promise.all(imageFiles.map(uploadImage));
-      // Combine: existing previews that are already URLs (not blob:) + newly uploaded
+      // Combine existing URL previews (not blob:) with newly uploaded
       const existingUrls = imagePreviews.filter((p) => !p.startsWith("blob:"));
       const allImages = [...existingUrls, ...uploadedUrls];
       const image_url = allImages[0] ?? form.image_url;
@@ -204,21 +204,42 @@ export default function AdminDashboard() {
       const color = form.variants.length > 0 ? form.variants[0].name : form.color;
 
       const payload = {
-        ...form,
-        slug: form.slug || slugify(form.name),
-        image_url,
-        images: allImages,
-        price: Number(form.price),
+        name:        form.name,
+        slug:        form.slug || slugify(form.name),
+        category:    form.category,
+        price:       Number(form.price),
         color,
-        variants: form.variants,
-      } as DbProductInsert & { variants: ColorVariant[]; images: string[] };
+        description: form.description,
+        details:     form.details,
+        sizes:       form.sizes,
+        image_url,
+        images:      allImages,
+        featured:    form.featured,
+        store:       form.store,
+        active:      form.active,
+        variants:    form.variants,
+      };
 
       if (editTarget) {
         const { error } = await supabase.from("products").update(payload).eq("id", editTarget.id);
-        if (error) throw error;
+        if (error) {
+          // If images column doesn't exist yet, retry without it
+          if (error.message?.includes("images")) {
+            const { images: _omit, ...payloadWithout } = payload as typeof payload & { images?: string[] };
+            const { error: e2 } = await supabase.from("products").update(payloadWithout).eq("id", editTarget.id);
+            if (e2) throw e2;
+          } else throw error;
+        }
       } else {
         const { error } = await supabase.from("products").insert(payload);
-        if (error) throw error;
+        if (error) {
+          // If images column doesn't exist yet, retry without it
+          if (error.message?.includes("images")) {
+            const { images: _omit, ...payloadWithout } = payload as typeof payload & { images?: string[] };
+            const { error: e2 } = await supabase.from("products").insert(payloadWithout);
+            if (e2) throw e2;
+          } else throw error;
+        }
       }
 
       setFormSuccess(true);
@@ -226,7 +247,7 @@ export default function AdminDashboard() {
       fetchProducts();
       setTimeout(() => setFormSuccess(false), 3000);
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Something went wrong.");
+      setFormError(err instanceof Error ? err.message : "Something went wrong. Check the browser console for details.");
     } finally {
       setFormLoading(false);
     }
